@@ -247,7 +247,7 @@ __global__ void CuTransSqr(float *d_sqr, int datLen, float waveLen, float dx){
     }
 }
 
-__global__ void CuCharToNormFloatArr(float *out, char16_t *in, int datLen, float Norm){
+__global__ void CuCharToNormFloatArr(float *out, unsigned char *in, int datLen, float Norm){
     // dim3 grid((width+31)/32, (height+31)/32), block(32,32)
     // CHECH deviceQuery and make sure threads per block are 1024!!!!
 
@@ -383,17 +383,17 @@ __global__ void CuInvFFTDiv(cufftComplex* array, float div, int datLen){
     }
 }
 
-void getGaborImposed(float *floatout, unsigned char *charout, char16_t *in, cufftComplex *transF, cufftComplex *transInt, int imgLen, int loopCount, int blockSize=16){
+void getGaborImposed(float *floatout, unsigned char *charout, unsigned char *in, cufftComplex *transF, cufftComplex *transInt, int imgLen, int loopCount, int blockSize=16){
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
     dim3 gridDatLen((int)ceil((float)datLen/(float)blockSize), (int)ceil((float)datLen/(float)blockSize));
     
-    char16_t *dev_in;
-    CHECK(cudaMalloc((void**)&dev_in,sizeof(char16_t)*imgLen*imgLen));
+    unsigned char *dev_in;
+    CHECK(cudaMalloc((void**)&dev_in,sizeof(unsigned char)*imgLen*imgLen));
     float *dev_img;
     CHECK(cudaMalloc((void**)&dev_img,sizeof(float)*imgLen*imgLen));
-    CHECK(cudaMemcpy(dev_in, in, sizeof(char16_t)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,65535.0);
+    CHECK(cudaMemcpy(dev_in, in, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
+    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,255.0);
     thrust::device_ptr<float> thimg(dev_img);
     float meanImg = thrust::reduce(thimg,thimg+imgLen*imgLen, (float)0.0, thrust::plus<float>());
     meanImg /= (float)(imgLen*imgLen);
@@ -459,7 +459,7 @@ void getGaborImposed(float *floatout, unsigned char *charout, char16_t *in, cuff
 }
 
 
-void getNewImage(char16_t *out, char16_t *img, float a[12], int imgLen){
+void getNewImage(unsigned char *out, unsigned char *img, float a[12], int imgLen){
     long int *tmpImg;
     tmpImg = (long int *)malloc(sizeof(long int)*imgLen*imgLen);
     for (int i = 0; i < imgLen*imgLen; i++){
@@ -477,9 +477,9 @@ void getNewImage(char16_t *out, char16_t *img, float a[12], int imgLen){
             int tmpX = (int)(round(a[0]+a[1]*j+a[2]*i+a[3]*j*j+a[4]*i*j+a[5]*i*i));
             int tmpY = (int)(round(a[6]+a[7]*j+a[8]*i+a[9]*j*j+a[10]*i*j+a[11]*i*i));
             if (tmpX>=0 && tmpX<imgLen && tmpY>=0 && tmpY <imgLen){
-                out[i*imgLen+j] = (char16_t)tmpImg[tmpY*imgLen+tmpX];
+                out[i*imgLen+j] = (unsigned char)tmpImg[tmpY*imgLen+tmpX];
             }else{
-                out[i*imgLen+j] = (char16_t)bkg;
+                out[i*imgLen+j] = (unsigned char)bkg;
             }
         }
     }
@@ -630,23 +630,23 @@ __global__ void CuFloatDiv(float *out, float value, int imgLen){
     }
 }
 
-void getPRImposed(float *floatout, unsigned char *charout, char16_t *in1, char16_t *in2, float* backImg1, float* backImg2, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transPR, cufftComplex *transInvPR, int imgLen, int loopCount, int PRloops, int blockSize=16){
+void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, unsigned char *in2, float* backImg1, float* backImg2, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transPR, cufftComplex *transInvPR, int imgLen, int loopCount, int PRloops, int blockSize=16){
     // dim3 Declaration
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
     dim3 gridDatLen((int)ceil((float)datLen/(float)blockSize), (int)ceil((float)datLen/(float)blockSize));
     
     // Char to device float and get mean
-    char16_t *dev_in1, *dev_in2;
-    CHECK(cudaMalloc((void**)&dev_in1,sizeof(char16_t)*imgLen*imgLen));
-    CHECK(cudaMalloc((void**)&dev_in2,sizeof(char16_t)*imgLen*imgLen));
+    unsigned char *dev_in1, *dev_in2;
+    CHECK(cudaMalloc((void**)&dev_in1,sizeof(unsigned char)*imgLen*imgLen));
+    CHECK(cudaMalloc((void**)&dev_in2,sizeof(unsigned char)*imgLen*imgLen));
     float *dev_img1, *dev_img2;
     CHECK(cudaMalloc((void**)&dev_img1,sizeof(float)*imgLen*imgLen));
     CHECK(cudaMalloc((void**)&dev_img2,sizeof(float)*imgLen*imgLen));    
-    CHECK(cudaMemcpy(dev_in1, in1, sizeof(char16_t)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(dev_in2, in2, sizeof(char16_t)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img1,dev_in1,imgLen,65535.0);
-    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img2,dev_in2,imgLen,65535.0);
+    CHECK(cudaMemcpy(dev_in1, in1, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(dev_in2, in2, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
+    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img1,dev_in1,imgLen,255.0);
+    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img2,dev_in2,imgLen,255.0);
     thrust::device_ptr<float> thimg1(dev_img1);
     thrust::device_ptr<float> thimg2(dev_img2);
     float meanImg1 = thrust::reduce(thimg1,thimg1+imgLen*imgLen, (float)0.0, thrust::plus<float>());
@@ -744,7 +744,7 @@ void getPRImposed(float *floatout, unsigned char *charout, char16_t *in1, char16
 
 void getBackGroundsWithoutBundle(float *backImg1,float *backImg2, unsigned char *cBackImg1, unsigned char *cBackImg2, Spinnaker::CameraPtr pCam[2], int imgLen, int loopCount){
     Spinnaker::ImagePtr pImg1, pImg2;
-    char16_t *cImg1, *cImg2;
+    unsigned char *cImg1, *cImg2;
     float *fImg1, *fImg2;
     fImg1 = (float *)calloc(imgLen*imgLen,sizeof(float));
     fImg2 = (float *)calloc(imgLen*imgLen,sizeof(float));
@@ -758,8 +758,8 @@ void getBackGroundsWithoutBundle(float *backImg1,float *backImg2, unsigned char 
         pImg2 = pCam[1]->GetNextImage();
         pCam[0]->EndAcquisition();
         pCam[1]->EndAcquisition();
-        cImg1 = (char16_t *)pImg1->GetData();
-        cImg2 = (char16_t *)pImg2->GetData();
+        cImg1 = (unsigned char *)pImg1->GetData();
+        cImg2 = (unsigned char *)pImg2->GetData();
         for (int idx = 0; idx < imgLen*imgLen; idx++){
             fImg1[idx] += (float)((int)cImg1[idx]);
             fImg2[idx] += (float)((int)cImg2[idx]);
@@ -770,8 +770,8 @@ void getBackGroundsWithoutBundle(float *backImg1,float *backImg2, unsigned char 
     // getNewFloatImage(fImg2,fImg2,coefa,imgLen);
 
     for (int idx = 0; idx < imgLen*imgLen; idx++){
-        fImg1[idx] /= (float)(loopCount)*65535.0;
-        fImg2[idx] /= (float)(loopCount)*65535.0;
+        fImg1[idx] /= (float)(loopCount)*255.0;
+        fImg2[idx] /= (float)(loopCount)*255.0;
     }
 
     for (int idx = 0; idx < imgLen*imgLen; idx++){
@@ -791,7 +791,7 @@ void getBackGrounds(float *backImg1,float *backImg2, unsigned char *cBackImg1, u
     char *coefPath = "./coefa.dat";
     readCoef(coefPath,coefa);
     Spinnaker::ImagePtr pImg1, pImg2;
-    char16_t *cImg1, *cImg2;
+    unsigned char *cImg1, *cImg2;
     float *fImg1, *fImg2;
     fImg1 = (float *)calloc(imgLen*imgLen,sizeof(float));
     fImg2 = (float *)calloc(imgLen*imgLen,sizeof(float));
@@ -805,8 +805,8 @@ void getBackGrounds(float *backImg1,float *backImg2, unsigned char *cBackImg1, u
         pImg2 = pCam[1]->GetNextImage();
         pCam[0]->EndAcquisition();
         pCam[1]->EndAcquisition();
-        cImg1 = (char16_t *)pImg1->GetData();
-        cImg2 = (char16_t *)pImg2->GetData();
+        cImg1 = (unsigned char *)pImg1->GetData();
+        cImg2 = (unsigned char *)pImg2->GetData();
         for (int idx = 0; idx < imgLen*imgLen; idx++){
             fImg1[idx] += (float)((int)cImg1[idx]);
             fImg2[idx] += (float)((int)cImg2[idx]);
@@ -817,8 +817,8 @@ void getBackGrounds(float *backImg1,float *backImg2, unsigned char *cBackImg1, u
     // getNewFloatImage(fImg2,fImg2,coefa,imgLen);
 
     for (int idx = 0; idx < imgLen*imgLen; idx++){
-        fImg1[idx] /= (float)(loopCount)*65535.0;
-        fImg2[idx] /= (float)(loopCount)*65535.0;
+        fImg1[idx] /= (float)(loopCount)*255.0;
+        fImg2[idx] /= (float)(loopCount)*255.0;
     }
 
     getNewFloatImage(fImg2,fImg2,coefa,imgLen);
@@ -836,17 +836,17 @@ void getBackGrounds(float *backImg1,float *backImg2, unsigned char *cBackImg1, u
 
 }
 
-void getBackRemGaborImposed(float *floatout, unsigned char *charout, char16_t *in, float*backImg, cufftComplex *transF, cufftComplex *transInt, int imgLen, int loopCount, int blockSize=16){
+void getBackRemGaborImposed(float *floatout, unsigned char *charout, unsigned char *in, float*backImg, cufftComplex *transF, cufftComplex *transInt, int imgLen, int loopCount, int blockSize=16){
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
     dim3 gridDatLen((int)ceil((float)datLen/(float)blockSize), (int)ceil((float)datLen/(float)blockSize));
     
-    char16_t *dev_in;
-    CHECK(cudaMalloc((void**)&dev_in,sizeof(char16_t)*imgLen*imgLen));
+    unsigned char *dev_in;
+    CHECK(cudaMalloc((void**)&dev_in,sizeof(unsigned char)*imgLen*imgLen));
     float *dev_img;
     CHECK(cudaMalloc((void**)&dev_img,sizeof(float)*imgLen*imgLen));
-    CHECK(cudaMemcpy(dev_in, in, sizeof(char16_t)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,65535.0);
+    CHECK(cudaMemcpy(dev_in, in, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
+    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,255.0);
     thrust::device_ptr<float> thimg(dev_img);
     float meanImg = thrust::reduce(thimg,thimg+imgLen*imgLen, (float)0.0, thrust::plus<float>());
     meanImg /= (float)(imgLen*imgLen);
@@ -945,9 +945,9 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     cam1->EndAcquisition();
     cam2->EndAcquisition();
     // unsigned char *charimg1 = (unsigned char *)pimg1->GetData();
-    char16_t *charimg1 = (char16_t *)pimg1->GetData();
+    unsigned char *charimg1 = (unsigned char *)pimg1->GetData();
     // unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
-    char16_t *charimg2 = (char16_t *)pimg2->GetData();
+    unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
     std::cout << (int)charimg1[0] << std::endl;
 
     float *floatimp1, *floatimp2;
@@ -1047,16 +1047,16 @@ void getImgAndBundleAdjCheck(Spinnaker::CameraPtr pCam[2],float *backImg1, float
     cam1->EndAcquisition();
     cam2->EndAcquisition();
     // unsigned char *charimg1 = (unsigned char *)pimg1->GetData();
-    char16_t *charimg1 = (char16_t *)pimg1->GetData();
+    unsigned char *charimg1 = (unsigned char *)pimg1->GetData();
     // unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
-    char16_t *charimg2 = (char16_t *)pimg2->GetData();
+    unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
 
     // Bundle Adj Check
     float coefa[12];
     char *coefPath = "./coefa.dat";
     readCoef(coefPath,coefa);
-    char16_t *charimg3;
-    charimg3 = (char16_t *)malloc(sizeof(char16_t)*imgLen*imgLen);
+    unsigned char *charimg3;
+    charimg3 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
     getNewImage(charimg3,charimg2,coefa,imgLen);
 
     float *floatimp1, *floatimp2;

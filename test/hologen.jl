@@ -60,7 +60,7 @@ function main()
     holo = fftshift(fft(obj)) .* trans
     holo = ifft(fftshift(holo))
     img = Array(real.(holo .* conj.(holo)))
-    save("./test120.png",float.(img)/2)
+    save("./test120.png",float.(img)./255.0.*128.0)
     # imshow(float.(img)/2)
     # graph = img[512,512:1024]
     # plot(graph,title="rad = $rad", xlims=(0,200),ylims=(0.5,1.5))

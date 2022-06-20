@@ -123,7 +123,7 @@ void cameraSetup(Spinnaker::CameraPtr pCam[2], int imgLen, int cam2OffSetX, int 
         pCam[i]->GammaEnable.SetValue(false);
         pCam[i]->AdcBitDepth.SetValue(Spinnaker::AdcBitDepth_Bit12);
         pCam[i]->AcquisitionFrameRateEnable.SetValue(false);
-        pCam[i]->PixelFormat.SetValue(Spinnaker::PixelFormat_Mono16);
+        pCam[i]->PixelFormat.SetValue(Spinnaker::PixelFormat_Mono8);
         // pCam[i]->Width.SetValue(imgLen);
         // pCam[i]->Height.SetValue(imgLen);
         pCam[i]->ExposureAuto.SetValue(Spinnaker::ExposureAutoEnums::ExposureAuto_Off);
@@ -215,15 +215,15 @@ std::tuple<float,float> getCamMean(Spinnaker::CameraPtr pCam[2],const int imgLen
     Spinnaker::ImagePtr pimg2 = cam2->GetNextImage();
     cam1->EndAcquisition();
     cam2->EndAcquisition();
-    char16_t *charimg1 = (char16_t *)pimg1->GetData();
-    char16_t *charimg2 = (char16_t *)pimg2->GetData();
+    unsigned char *charimg1 = (unsigned char *)pimg1->GetData();
+    unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
 
     // Get Mean
     float mean1 = 0.0;
     float mean2 = 0.0;
     for (int i = 0; i < imgLen*imgLen; i++){
-        mean1 += (float)((int)charimg1[i])/65535.0;
-        mean2 += (float)((int)charimg2[i])/65535.0;
+        mean1 += (float)((int)charimg1[i])/255.0;
+        mean2 += (float)((int)charimg2[i])/255.0;
     }
     mean1 /= (float)(imgLen*imgLen);
     mean2 /= (float)(imgLen*imgLen);

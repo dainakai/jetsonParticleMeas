@@ -40,6 +40,7 @@ void getFloatimage(float *img, const int imgLen, const char* path){
         img[i] = (float)UIntImage[i]/128.0;
     }
 
+    std::cout << (float)img[512*1024] << std::endl;
     free(UIntImage);
 }
 
@@ -48,8 +49,8 @@ __global__ void CuFloatSqrt(float *dst, cufftComplex *src, int datLen){
     int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     if( (x < datLen) && (y < datLen) ){
-        dst[y*datLen + x] = src[y*datLen+x].x;
-        // dst[y*datLen + x] = sqrt(src[y*datLen+x].x);
+        // dst[y*datLen + x] = src[y*datLen+x].x;
+        dst[y*datLen + x] = sqrt(src[y*datLen+x].x);
     }
 }
 
@@ -118,19 +119,6 @@ __global__ void CuTransSqr(float *d_sqr, int datLen, float waveLen, float dx){
 
     if( (x < datLen) && (y < datLen) ){
         d_sqr[x + datLen*y] = 1.0 - ((x_f - w_f/2.0)*waveLen/w_f/dx)*((x_f - w_f/2.0)*waveLen/w_f/dx) - ((y_f - w_f/2.0)*waveLen/w_f/dx)*((y_f - w_f/2.0)*waveLen/w_f/dx);
-    }
-}
-
-__global__ void CuCharToNormFloatArr(float *out, unsigned char *in, int datLen, float Norm){
-    // dim3 grid((width+31)/32, (height+31)/32), block(32,32)
-    // CHECH deviceQuery and make sure threads per block are 1024!!!!
-
-	int x = blockIdx.x*blockDim.x + threadIdx.x;
-    int y = blockIdx.y*blockDim.y + threadIdx.y;
-
-    if( (x < datLen) && (y < datLen) ){
-        out[y*datLen + x] = (float)((int)in[y*datLen + x])/Norm;
-        // printf("%lf ",out[y*datLen+x]);
     }
 }
 
@@ -216,15 +204,6 @@ __global__ void CuUpdateImposed(float *imp, float *tmp, int datLen){
         if (tmp[y*datLen+x] < imp[y*datLen+x]){
             imp[y*datLen+x] = tmp[y*datLen+x];
         }
-    }
-}
-
-__global__ void CuGetCenterHalf(float *out, float *in, int imgLen){
-	int x = blockIdx.x*blockDim.x + threadIdx.x;
-    int y = blockIdx.y*blockDim.y + threadIdx.y;
-
-    if( (x < imgLen) && (y < imgLen) ){
-        out[y*imgLen + x] = in[(y+imgLen/2)*imgLen*2 + x+imgLen/2];
     }
 }
 
@@ -325,7 +304,7 @@ int main(){
     const float zF = 60.0*1000.0;
     const float dx = 6.9;
     const float dz = 25.0;
-    const int loopCount = 100;
+    const int loopCount = 20;
     const float prDist = 60.0*1000.0;
     const float waveLen = 0.532;
     const int blockSize = 16;
@@ -352,8 +331,6 @@ int main(){
     CHECK(cudaMalloc((void**)&dev_img2,sizeof(float)*imgLen*imgLen));    
     CHECK(cudaMemcpy(dev_img1, fImg1, sizeof(float)*imgLen*imgLen, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(dev_img2, fImg2, sizeof(float)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    // CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img1,dev_cImg1,imgLen,128.0);
-    // CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img2,dev_cImg2,imgLen,128.0);
 
     cufftComplex *dev_holo1, *dev_holo2;
     CHECK(cudaMalloc((void**)&dev_holo1,sizeof(cufftComplex)*imgLen*imgLen));
@@ -393,13 +370,6 @@ int main(){
     }
     cv::Mat interImg = cv::Mat(imgLen,imgLen,CV_8U,inter);
     cv::imwrite("./inter.bmp",interImg);
-     
-
-    // for (int i = 0; i < imgLen*imgLen; i++)
-    // {
-    //     std::cout << (float)host[i].x << " ";
-    // }
-    // std::cout << std::endl;
 
 
     float *dev_imp;
@@ -431,7 +401,6 @@ int main(){
 
     // float *dev_outImp;
     // CHECK(cudaMalloc((void**)&dev_outImp,sizeof(float)*imgLen*imgLen));
-    // CuGetCenterHalf<<<gridImgLen,block>>>(dev_outImp,dev_imp,imgLen);
 
 
     unsigned char *saveImp;
