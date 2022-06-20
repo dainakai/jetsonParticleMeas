@@ -1,0 +1,1 @@
+nvcc -O3 -I/usr/local/include/opencv4/ -L/usr/local/lib -lopencv_core -lopencv_imgcodecs -lcufft -lopencv_highgui PRtest.cu -o PRtest
