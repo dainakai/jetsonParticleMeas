@@ -616,8 +616,9 @@ __global__ void CuBackRem(float *out, float *back, float addConst, int imgLen){
     int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     if( (x < imgLen) && (y < imgLen) ){
-        out[y*imgLen + x] = out[y*imgLen+x]/back[y*imgLen+x];
+        // out[y*imgLen + x] = out[y*imgLen+x]/back[y*imgLen+x];
         // out[y*imgLen + x] = out[y*imgLen+x]-back[y*imgLen+x]+addConst;
+        out[y*imgLen + x] = (out[y*imgLen+x]-back[y*imgLen+x]+addConst)/(addConst);
     }
 }
 
@@ -856,7 +857,7 @@ void getBackRemGaborImposed(float *floatout, unsigned char *charout, unsigned ch
     float *dev_bkg;
     CHECK(cudaMalloc((void**)&dev_bkg,sizeof(float)*imgLen*imgLen));
     CHECK(cudaMemcpy(dev_bkg,backImg,sizeof(float)*imgLen*imgLen,cudaMemcpyHostToDevice));
-    CuBackRem<<<gridImgLen,block>>>(dev_img,dev_bkg,1.0,imgLen);
+    CuBackRem<<<gridImgLen,block>>>(dev_img,dev_bkg,meanImg,imgLen);
     // CuBackRem<<<gridImgLen,block>>>(dev_img,dev_bkg,0.5,imgLen);
     cudaFree(dev_bkg);
 
@@ -929,9 +930,9 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     CHECK(cudaMalloc((void **)&d_transF2, sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void **)&d_transInt, sizeof(cufftComplex)*datLen*datLen));
     CuTransSqr<<<grid,block>>>(d_sqr,datLen,waveLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transF,d_sqr,zF,waveLen,datLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,zF*2.0,waveLen,datLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,dz,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transF,d_sqr,-zF,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-zF*2.0,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,-dz,waveLen,datLen,dx);
     std::cout << "Gabor Init OK" << std::endl;
 
     // Camera Init
@@ -988,7 +989,7 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     cv::namedWindow("Cam1",cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Cam2",cv::WINDOW_AUTOSIZE);
     cv::moveWindow("Cam1",0,0);
-    cv::moveWindow("Cam2",512,0);
+    cv::moveWindow("Cam2",520,0);
     cv::imshow("Cam1",imp1);
     cv::imshow("Cam2",imp2);
     cv::waitKey(10);

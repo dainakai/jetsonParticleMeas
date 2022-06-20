@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     const int srchSize = imgLen/4;
     const int gridNum = (int)(imgLen/gridSize);
 
-    const int backgroundLoops = 100;
+    const int backgroundLoops = 10;
 
     const float zFront = 1000*60.0;
     const float dz = 25.0;
@@ -111,12 +111,12 @@ int main(int argc, char** argv){
     std::cout << "test" << std::endl;
 
     // Process Bridge
-    std::cout << "Background Acquisition Completed. PR Reconstruction will be started in..." << std::endl;
-    for (int i = 0; i <= 5; i++){
-        int sec = 5-i;
-        sleep(1);
-        std::cout << sec << std::endl;
-    }
+    // std::cout << "Background Acquisition Completed. PR Reconstruction will be started in..." << std::endl;
+    // for (int i = 0; i <= 5; i++){
+    //     int sec = 5-i;
+    //     sleep(1);
+    //     std::cout << sec << std::endl;
+    // }
 
 
     // Processing

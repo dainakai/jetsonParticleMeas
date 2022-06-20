@@ -41,6 +41,8 @@ int main(int argc, char** argv){
 
     const int blockSize = 16; 
 
+    const float targetMeanBright = 0.3;
+
     // Camera Init
     Spinnaker::SystemPtr system = Spinnaker::System::GetInstance();
     Spinnaker::CameraList camList = system->GetCameras();
@@ -75,13 +77,13 @@ int main(int argc, char** argv){
         std::tie(mean1,mean2) = getCamMean(pCam,imgLen);
         std::cout << "Cam1 mean: " << mean1 << std::endl; 
         std::cout << "Cam2 mean: " << mean2 << std::endl; 
-        if (abs(mean1-0.5)<=0.01 && abs(mean2-0.5) <= 0.01){
+        if (abs(mean1-targetMeanBright)<=0.01 && abs(mean2-targetMeanBright) <= 0.01){
             break;
-        }else if(abs(mean2-0.5)<=0.01){
-            gain1 += -(mean1-0.5);
+        }else if(abs(mean2-targetMeanBright)<=0.01){
+            gain1 += -(mean1-targetMeanBright);
             pCam[0]->Gain.SetValue((double)gain1);
         }else{
-            gain2 += -(mean2-0.5);
+            gain2 += -(mean2-targetMeanBright);
             pCam[1]->Gain.SetValue((double)gain2);
         }
 
