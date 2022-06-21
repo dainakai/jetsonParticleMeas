@@ -295,7 +295,7 @@ int main(int argc, char** argv){
     const int srchSize = imgLen/4;
     const int gridNum = (int)(imgLen/gridSize);
 
-    const int blockSize = 32;
+    const int blockSize = 16;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
 
     const char * path1 = "./cam1.bmp";

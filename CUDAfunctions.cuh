@@ -963,7 +963,8 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
 
     //Save Imposed Image
     Spinnaker::ImagePtr saveImg1 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,charimp1);
-    getBackRemGaborImposed(floatimp1,charimp1,charimg1,backImg1,d_transF2,d_transInt,imgLen,loopCount);
+    getGaborImposed(floatimp1,charimp1,charimg1,d_transF2,d_transInt,imgLen,loopCount);
+    // getBackRemGaborImposed(floatimp1,charimp1,charimg1,backImg1,d_transF2,d_transInt,imgLen,loopCount);
     saveImg1->Convert(Spinnaker::PixelFormat_Mono8);
     
     Spinnaker::ImagePtr saveImg2 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,charimp2);
