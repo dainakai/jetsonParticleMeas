@@ -268,7 +268,11 @@ __global__ void CuNormFloatArrToChar(unsigned char *out, float *in, int datLen, 
     int y = blockIdx.y*blockDim.y + threadIdx.y;
 
     if( (x < datLen) && (y < datLen) ){
-        out[y*datLen + x] = (unsigned char)(in[y*datLen + x]*Norm);
+        if (in[y*datLen+x] >= 0.0){
+            out[y*datLen + x] = (unsigned char)(in[y*datLen + x]*Norm);
+        }else{
+            out[y*datLen + x] = (unsigned char)0;
+        }
         // printf("%lf ",out[y*datLen+x]);
     }
 }
@@ -330,6 +334,16 @@ __global__ void CuGetAbsFromComp(float *out, cufftComplex *in, int datLen){
     if( (x < datLen) && (y < datLen) ){
         cufftComplex tmp = in[y*datLen + x];
         out[y*datLen + x] = sqrt(tmp.x * tmp.x + tmp.y * tmp.y); // Need Sqrt() ?
+    }
+}
+
+__global__ void CuGetAbs2FromComp(float *out, cufftComplex *in, int datLen){
+	int x = blockIdx.x*blockDim.x + threadIdx.x;
+    int y = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if( (x < datLen) && (y < datLen) ){
+        cufftComplex tmp = in[y*datLen + x];
+        out[y*datLen + x] = tmp.x * tmp.x + tmp.y * tmp.y; // Need Sqrt() ?
     }
 }
 
@@ -604,7 +618,7 @@ void getPRonGPU(cufftComplex *dev_holo, cufftComplex *holo1, cufftComplex *holo2
     CHECK(cudaMalloc((void**)&compAmp2,sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void**)&phi1,sizeof(float)*datLen*datLen));
     CHECK(cudaMalloc((void**)&phi2,sizeof(float)*datLen*datLen));
-    CuFillArrayFloat<<<gridDatLen,block>>>(phi1,1.0,datLen);
+    CuFillArrayFloat<<<gridDatLen,block>>>(phi1,0.0,datLen);
 
     float *sqrtImg1, *sqrtImg2;
     CHECK(cudaMalloc((void**)&sqrtImg1,sizeof(float)*datLen*datLen));
@@ -616,31 +630,33 @@ void getPRonGPU(cufftComplex *dev_holo, cufftComplex *holo1, cufftComplex *holo2
     cufftHandle plan;
     cufftPlan2d(&plan, datLen, datLen, CUFFT_C2C);
 
-    for (int itr = 0; itr < iterations; itr++){
-        // STEP 1
-        cufftExecC2C(plan,compAmp1,compAmp2,CUFFT_FORWARD);
-        CuFFTshift<<<gridDatLen,block>>>(compAmp2,datLen);
-        CuComplexMul<<<gridDatLen,block>>>(compAmp2,compAmp2,trans,datLen);
-        CuFFTshift<<<gridDatLen,block>>>(compAmp2,datLen);
-        cufftExecC2C(plan,compAmp2,compAmp2,CUFFT_INVERSE);
-        CuInvFFTDiv<<<gridDatLen,block>>>(compAmp2,(float)(datLen*datLen),datLen);
-        CuGetCompAngle<<<gridDatLen,block>>>(phi2,compAmp2, datLen);
+    // for (int itr = 0; itr < iterations; itr++){
+    //     // STEP 1
+    //     cufftExecC2C(plan,compAmp1,compAmp2,CUFFT_FORWARD);
+    //     CuFFTshift<<<gridDatLen,block>>>(compAmp2,datLen);
+    //     CuComplexMul<<<gridDatLen,block>>>(compAmp2,compAmp2,trans,datLen);
+    //     CuFFTshift<<<gridDatLen,block>>>(compAmp2,datLen);
+    //     cufftExecC2C(plan,compAmp2,compAmp2,CUFFT_INVERSE);
+    //     CuInvFFTDiv<<<gridDatLen,block>>>(compAmp2,(float)(datLen*datLen),datLen);
+    //     CuGetCompAngle<<<gridDatLen,block>>>(phi2,compAmp2, datLen);
 
-        // STEP 2
-        CuGetComplexArray<<<gridDatLen,block>>>(compAmp2,sqrtImg2,phi2,datLen);
+    //     // STEP 2
+    //     CuGetComplexArray<<<gridDatLen,block>>>(compAmp2,sqrtImg2,phi2,datLen);
 
-        // STEP 3
-        cufftExecC2C(plan,compAmp2,compAmp1,CUFFT_FORWARD);
-        CuFFTshift<<<gridDatLen,block>>>(compAmp1,datLen);
-        CuComplexMul<<<gridDatLen,block>>>(compAmp1,compAmp1,transInv,datLen);
-        CuFFTshift<<<gridDatLen,block>>>(compAmp1,datLen);
-        cufftExecC2C(plan,compAmp1,compAmp1,CUFFT_INVERSE);
-        CuInvFFTDiv<<<gridDatLen,block>>>(compAmp1,(float)(datLen*datLen),datLen);
-        CuGetCompAngle<<<gridDatLen,block>>>(phi1,compAmp1,datLen);
+    //     // STEP 3
+    //     cufftExecC2C(plan,compAmp2,compAmp1,CUFFT_FORWARD);
+    //     CuFFTshift<<<gridDatLen,block>>>(compAmp1,datLen);
+    //     CuComplexMul<<<gridDatLen,block>>>(compAmp1,compAmp1,transInv,datLen);
+    //     CuFFTshift<<<gridDatLen,block>>>(compAmp1,datLen);
+    //     cufftExecC2C(plan,compAmp1,compAmp1,CUFFT_INVERSE);
+    //     CuInvFFTDiv<<<gridDatLen,block>>>(compAmp1,(float)(datLen*datLen),datLen);
+    //     CuGetCompAngle<<<gridDatLen,block>>>(phi1,compAmp1,datLen);
 
-        // STEP 4
-        CuGetComplexArray<<<gridDatLen,block>>>(compAmp1,sqrtImg1,phi1,datLen);
-    }
+    //     // STEP 4
+    //     CuGetComplexArray<<<gridDatLen,block>>>(compAmp1,sqrtImg1,phi1,datLen);
+    // }
+
+    CuGetComplexArray<<<gridDatLen,block>>>(compAmp1,sqrtImg1,phi1,datLen);
     
     CHECK(cudaMemcpy(dev_holo,compAmp1,sizeof(cufftComplex)*datLen*datLen,cudaMemcpyDeviceToDevice));
 
@@ -735,21 +751,18 @@ void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, u
 
     getPRonGPU(dev_prholo,dev_holo1,dev_holo2,transPR,transInvPR,PRloops,datLen,blockSize);
 
-    cufftComplex *host;
-    host = (cufftComplex *)malloc(sizeof(cufftComplex)*imgLen*imgLen);
-    CHECK(cudaMemcpy(host,dev_prholo,sizeof(cufftComplex)*imgLen*imgLen,cudaMemcpyDeviceToHost));
-
-    unsigned char *inter;
-    inter = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
-
-    for (int i = 0; i < imgLen*imgLen; i++)
-    {
-        inter[i] = (unsigned char)((host[i].x*host[i].x+host[i].y*host[i].y));
-    }
-    cv::Mat interImg = cv::Mat(imgLen,imgLen,CV_8U,inter);
-    cv::imwrite("./inter.bmp",interImg);
-    free(host);
-    free(inter);
+    // cufftComplex *host;
+    // host = (cufftComplex *)malloc(sizeof(cufftComplex)*datLen*datLen);
+    // CHECK(cudaMemcpy(host,dev_prholo,sizeof(cufftComplex)*datLen*datLen,cudaMemcpyDeviceToHost));
+    // unsigned char *inter;
+    // inter = (unsigned char *)malloc(sizeof(unsigned char)*datLen*datLen);
+    // for (int i = 0; i < datLen*datLen; i++){
+    //     inter[i] = (unsigned char)((host[i].x*host[i].x+host[i].y*host[i].y));
+    // }
+    // cv::Mat interImg = cv::Mat(datLen,datLen,CV_8U,inter);
+    // cv::imwrite("./inter.png",interImg);
+    // free(host);
+    // free(inter);
 
     float *dev_imp;
     CHECK(cudaMalloc((void**)&dev_imp,sizeof(float)*datLen*datLen));
@@ -773,9 +786,22 @@ void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, u
         CuFFTshift<<<gridDatLen,block>>>(tmp_holo,datLen);
         cufftExecC2C(plan, tmp_holo, tmp_holo, CUFFT_INVERSE);
         CuInvFFTDiv<<<gridDatLen,block>>>(tmp_holo,(float)(datLen*datLen),datLen);
-        CuGetAbsFromComp<<<gridDatLen,block>>>(tmp_imp,tmp_holo,datLen);
+        CuGetAbs2FromComp<<<gridDatLen,block>>>(tmp_imp,tmp_holo,datLen);
         CuUpdateImposed<<<gridDatLen,block>>>(dev_imp,tmp_imp,datLen);
     }
+
+    cufftComplex *host;
+    host = (cufftComplex *)malloc(sizeof(cufftComplex)*datLen*datLen);
+    CHECK(cudaMemcpy(host,tmp_holo,sizeof(cufftComplex)*datLen*datLen,cudaMemcpyDeviceToHost));
+    unsigned char *inter;
+    inter = (unsigned char *)malloc(sizeof(unsigned char)*datLen*datLen);
+    for (int i = 0; i < datLen*datLen; i++){
+        inter[i] = (unsigned char)((host[i].x*host[i].x+host[i].y*host[i].y));
+    }
+    cv::Mat interImg = cv::Mat(datLen,datLen,CV_8U,inter);
+    cv::imwrite("./inter.png",interImg);
+    free(host);
+    free(inter);
 
     float *dev_outImp;
     CHECK(cudaMalloc((void**)&dev_outImp,sizeof(float)*imgLen*imgLen));
