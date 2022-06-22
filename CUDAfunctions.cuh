@@ -393,7 +393,7 @@ void getGaborImposed(float *floatout, unsigned char *charout, unsigned char *in,
     float *dev_img;
     CHECK(cudaMalloc((void**)&dev_img,sizeof(float)*imgLen*imgLen));
     CHECK(cudaMemcpy(dev_in, in, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,255.0);
+    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,1.0);
     thrust::device_ptr<float> thimg(dev_img);
     float meanImg = thrust::reduce(thimg,thimg+imgLen*imgLen, (float)0.0, thrust::plus<float>());
     meanImg /= (float)(imgLen*imgLen);
@@ -406,7 +406,7 @@ void getGaborImposed(float *floatout, unsigned char *charout, unsigned char *in,
 
     float *dev_imp;
     CHECK(cudaMalloc((void**)&dev_imp,sizeof(float)*datLen*datLen));
-    CuFillArrayFloat<<<gridDatLen,block>>>(dev_imp,1.0,datLen);
+    CuFillArrayFloat<<<gridDatLen,block>>>(dev_imp,255.0,datLen);
 
     cufftHandle plan;
     cufftPlan2d(&plan, datLen, datLen, CUFFT_C2C);
@@ -438,7 +438,7 @@ void getGaborImposed(float *floatout, unsigned char *charout, unsigned char *in,
 
     unsigned char *saveImp;
     CHECK(cudaMalloc((void**)&saveImp,sizeof(unsigned char)*imgLen*imgLen));
-    CuNormFloatArrToChar<<<gridImgLen,block>>>(saveImp,dev_outImp,imgLen,255.0);
+    CuNormFloatArrToChar<<<gridImgLen,block>>>(saveImp,dev_outImp,imgLen,1.0);
 
     CHECK(cudaMemcpy(charout, saveImp, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyDeviceToHost));
 
@@ -967,7 +967,8 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     saveImg1->Convert(Spinnaker::PixelFormat_Mono8);
     
     Spinnaker::ImagePtr saveImg2 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,charimp2);
-    getBackRemGaborImposed(floatimp2,charimp2,charimg2,backImg2,d_transF,d_transInt,imgLen,loopCount);
+    getGaborImposed(floatimp2,charimp2,charimg2,d_transF,d_transInt,imgLen,loopCount);
+    // getBackRemGaborImposed(floatimp2,charimp2,charimg2,backImg2,d_transF,d_transInt,imgLen,loopCount);
     saveImg2->Convert(Spinnaker::PixelFormat_Mono8);
 
     saveImg1->Save("./imposed1.jpg");

@@ -17,7 +17,7 @@ int main(int argc, char** argv){
     std::cout << argv[0] << " Starting..." << std::endl;
     
     // Parameters
-    const float camExposure = 100.0;
+    const float camExposure = 200.0;
     // const float gainInit = 1.0;
 
     float gain1,gain2;
@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 
     const int blockSize = 16; 
 
-    const float targetMeanBright = 0.3;
+    const float targetMeanBright = 0.5;
 
     // Camera Init
     Spinnaker::SystemPtr system = Spinnaker::System::GetInstance();
@@ -77,17 +77,15 @@ int main(int argc, char** argv){
         std::tie(mean1,mean2) = getCamMean(pCam,imgLen);
         std::cout << "Cam1 mean: " << mean1 << std::endl; 
         std::cout << "Cam2 mean: " << mean2 << std::endl; 
-        if (abs(mean1-targetMeanBright)<=0.01 && abs(mean2-targetMeanBright) <= 0.01){
+        if (abs(mean2-targetMeanBright) <= 0.01){
             break;
-        }else if(abs(mean2-targetMeanBright)<=0.01){
-            gain1 += -(mean1-targetMeanBright);
-            pCam[0]->Gain.SetValue((double)gain1);
         }else{
             gain2 += -(mean2-targetMeanBright);
             pCam[1]->Gain.SetValue((double)gain2);
         }
 
     }
+    pCam[0]->Gain.SetValue((double)gain2);
     gain1 = pCam[0]->Gain.GetValue();
     gain2 = pCam[1]->Gain.GetValue();
     std::cout << "Cam1 Gain:" << gain1 << std::endl;
