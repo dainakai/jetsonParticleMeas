@@ -100,8 +100,8 @@ int main(int argc, char** argv){
     CHECK(cudaMalloc((void **)&d_transPR, sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void **)&d_transPRInv, sizeof(cufftComplex)*datLen*datLen));
     CuTransSqr<<<grid,block>>>(d_sqr,datLen,waveLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transF,d_sqr,-zF,waveLen,datLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,-dz,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transF,d_sqr,-1.0*zF,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,-1.0*dz,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transPR,d_sqr,prDist,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transPRInv,d_sqr,-1.0*prDist,waveLen,datLen,dx);
     std::cout << "PR Init OK" << std::endl;

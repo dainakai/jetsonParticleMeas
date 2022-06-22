@@ -735,6 +735,22 @@ void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, u
 
     getPRonGPU(dev_prholo,dev_holo1,dev_holo2,transPR,transInvPR,PRloops,datLen,blockSize);
 
+    cufftComplex *host;
+    host = (cufftComplex *)malloc(sizeof(cufftComplex)*imgLen*imgLen);
+    CHECK(cudaMemcpy(host,dev_prholo,sizeof(cufftComplex)*imgLen*imgLen,cudaMemcpyDeviceToHost));
+
+    unsigned char *inter;
+    inter = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
+
+    for (int i = 0; i < imgLen*imgLen; i++)
+    {
+        inter[i] = (unsigned char)((host[i].x*host[i].x+host[i].y*host[i].y));
+    }
+    cv::Mat interImg = cv::Mat(imgLen,imgLen,CV_8U,inter);
+    cv::imwrite("./inter.bmp",interImg);
+    free(host);
+    free(inter);
+
     float *dev_imp;
     CHECK(cudaMalloc((void**)&dev_imp,sizeof(float)*datLen*datLen));
     CuFillArrayFloat<<<gridDatLen,block>>>(dev_imp,255.0,datLen);
