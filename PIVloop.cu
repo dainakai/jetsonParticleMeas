@@ -27,7 +27,7 @@ int main(int argc, char** argv){
     }
     
     // Parameters
-    const float camExposure = 100.0;
+    const float camExposure = 200.0;
     const float gainInit = 1.0;
 
     const int OffsetX = atoi(argv[1]);

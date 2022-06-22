@@ -30,7 +30,7 @@ int main(int argc, char** argv){
     }
     
     // Parameters
-    const float camExposure = 100.0;
+    const float camExposure = 200.0;
     const float gainInit = 1.0;
 
     const int OffsetX = atoi(argv[1]);
@@ -115,8 +115,8 @@ int main(int argc, char** argv){
     pCam[0]->EndAcquisition();
     pCam[1]->EndAcquisition();
 
-    char16_t *charimg1 = (char16_t *)pImg1->GetData();
-    char16_t *charimg2 = (char16_t *)pImg2->GetData();
+    unsigned char *charimg1 = (unsigned char *)pImg1->GetData();
+    unsigned char *charimg2 = (unsigned char *)pImg2->GetData();
 
 
     float *bImg1, *bImg2;
@@ -191,8 +191,8 @@ int main(int argc, char** argv){
         pCam[0]->EndAcquisition();
         pCam[1]->EndAcquisition();
 
-        charimg1 = (char16_t *)pImg1->GetData();
-        charimg2 = (char16_t *)pImg2->GetData();
+        charimg1 = (unsigned char *)pImg1->GetData();
+        charimg2 = (unsigned char *)pImg2->GetData();
 
         getNewImage(charimg2,charimg2,coefa,imgLen);
 
