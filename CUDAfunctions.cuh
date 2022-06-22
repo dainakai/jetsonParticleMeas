@@ -813,7 +813,6 @@ void getBackGrounds(float *backImg1,float *backImg2, unsigned char *cBackImg1, u
             fImg2[idx] += (float)((int)cImg2[idx]);
         }
     }
-    std::cout << fImg1[0] << std::endl;
 
     // getNewFloatImage(fImg2,fImg2,coefa,imgLen);
 
