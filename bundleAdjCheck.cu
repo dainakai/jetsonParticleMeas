@@ -38,7 +38,7 @@ int main(int argc, char** argv){
     const int backgroundLoops = 30;
     const int loopCount = 100;
 
-    const float zFront = 1000*5.0;
+    const float zFront = 1000.0*5.0;
     const float dz = 10.0;
     const float wavLen = 0.532;
     const float dx = 3.45/0.5;
@@ -72,32 +72,32 @@ int main(int argc, char** argv){
     cameraSetup(pCam,imgLen,OffsetX,OffsetY,camExposure,gain1,gain2);
 
     // Background Processing
-    pCam[0]->BeginAcquisition();
-    pCam[1]->BeginAcquisition();
-    pCam[0]->TriggerSoftware.Execute();
-    Spinnaker::ImagePtr pImg1 = pCam[0]->GetNextImage();
-    Spinnaker::ImagePtr pImg2 = pCam[1]->GetNextImage();
-    pCam[0]->EndAcquisition();
-    pCam[1]->EndAcquisition();
+    // pCam[0]->BeginAcquisition();
+    // pCam[1]->BeginAcquisition();
+    // pCam[0]->TriggerSoftware.Execute();
+    // Spinnaker::ImagePtr pImg1 = pCam[0]->GetNextImage();
+    // Spinnaker::ImagePtr pImg2 = pCam[1]->GetNextImage();
+    // pCam[0]->EndAcquisition();
+    // pCam[1]->EndAcquisition();
 
-    char16_t *charimg1 = (char16_t *)pImg1->GetData();
-    char16_t *charimg2 = (char16_t *)pImg2->GetData();
+    // char16_t *charimg1 = (char16_t *)pImg1->GetData();
+    // char16_t *charimg2 = (char16_t *)pImg2->GetData();
 
 
-    float *bImg1, *bImg2;
-    bImg1 = (float *)malloc(sizeof(float)*imgLen*imgLen);
-    bImg2 = (float *)malloc(sizeof(float)*imgLen*imgLen);
-    unsigned char *cBackImg1, *cBackImg2;
-    cBackImg1 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
-    cBackImg2 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
-    Spinnaker::ImagePtr saveBack1 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg1);
-    Spinnaker::ImagePtr saveBack2 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg2);
-    getBackGrounds(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
-    saveBack1->Convert(Spinnaker::PixelFormat_Mono8);
-    saveBack2->Convert(Spinnaker::PixelFormat_Mono8);
-    saveBack1->Save("./meanBkg1.png");
-    saveBack2->Save("./meanBkg2.png");
-    std::cout << "test" << std::endl;
+    // float *bImg1, *bImg2;
+    // bImg1 = (float *)malloc(sizeof(float)*imgLen*imgLen);
+    // bImg2 = (float *)malloc(sizeof(float)*imgLen*imgLen);
+    // unsigned char *cBackImg1, *cBackImg2;
+    // cBackImg1 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
+    // cBackImg2 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
+    // Spinnaker::ImagePtr saveBack1 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg1);
+    // Spinnaker::ImagePtr saveBack2 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg2);
+    // getBackGrounds(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
+    // saveBack1->Convert(Spinnaker::PixelFormat_Mono8);
+    // saveBack2->Convert(Spinnaker::PixelFormat_Mono8);
+    // saveBack1->Save("./meanBkg1.png");
+    // saveBack2->Save("./meanBkg2.png");
+    // std::cout << "test" << std::endl;
 
     // // Process Bridge
     // std::cout << "Background Acquisition Completed. PR Reconstruction will be started in..." << std::endl;
@@ -108,7 +108,7 @@ int main(int argc, char** argv){
     // }
 
 
-    getImgAndBundleAdjCheck(pCam, bImg1, bImg2,imgLen,gridSize,intrSize,srchSize,zFront,dz,wavLen,dx,blockSize);
+    getImgAndBundleAdjCheck(pCam,imgLen,gridSize,intrSize,srchSize,zFront,dz,wavLen,dx,blockSize);
 
     
     pCam[0]->DeInit();

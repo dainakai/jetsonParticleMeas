@@ -51,9 +51,9 @@ int main(int argc, char** argv){
     const int backgroundLoops = 30;
     const int ImposedLoop = 100;
 
-    const float prDist = 60.0*1000.0; // 60 mm
-    const float zF = 60.0*1000.0;
-    const float dz = 50.0;
+    const float prDist = 5.0*1000.0; // 60 mm
+    const float zF = 5.0*1000.0;
+    const float dz = 20.0;
     const float waveLen = 0.532;
     const float dx = 3.45/0.5;
 
@@ -178,7 +178,7 @@ int main(int argc, char** argv){
     cv::Mat PrImp, GaborImp;
     cv::namedWindow("PR",cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Gabor",cv::WINDOW_AUTOSIZE);
-    cv::moveWindow("PR",512,0);
+    cv::moveWindow("PR",520,0);
     cv::moveWindow("Gabor",0,0);
 
     int num = 0;

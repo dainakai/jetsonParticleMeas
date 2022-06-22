@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 
     const int blockSize = 16; 
 
-    const float targetMeanBright = 0.5;
+    const float targetMeanBright = 0.4;
 
     // Camera Init
     Spinnaker::SystemPtr system = Spinnaker::System::GetInstance();

@@ -415,11 +415,12 @@ float getImgSTD(unsigned char *in, int imgLen){
     }
     mean /= (float)(imgLen*imgLen);
 
-    float std;
+    float std=0.0;
     for (int idx = 0; idx < imgLen*imgLen; idx++){
-        std += sqrt(((float)((int)in[idx])-mean)*((float)((int)in[idx])-mean));
+        std += ((float)((int)in[idx])-mean)*((float)((int)in[idx])-mean);
     }
     std /= (float)(imgLen*imgLen);
+    std = sqrt(std);
 
     return std;
 }
@@ -435,7 +436,7 @@ void getGaborImposed(float *floatout, unsigned char *charout, unsigned char *in,
     CHECK(cudaMalloc((void**)&dev_img,sizeof(float)*imgLen*imgLen));
     CHECK(cudaMemcpy(dev_in, in, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
     CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,1.0);
-    thrust::device_ptr<float> thimg(dev_img);
+    // thrust::device_ptr<float> thimg(dev_img);
     // float meanImg = thrust::reduce(thimg,thimg+imgLen*imgLen, (float)0.0, thrust::plus<float>());
     // meanImg /= (float)(imgLen*imgLen);
     // std::cout << "Image mean: " << meanImg << std::endl;
@@ -722,9 +723,9 @@ void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, u
     cufftComplex *dev_holo1, *dev_holo2;
     CHECK(cudaMalloc((void**)&dev_holo1,sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void**)&dev_holo2,sizeof(cufftComplex)*datLen*datLen));
-    CuFillArrayComp<<<gridDatLen,block>>>(dev_holo1,imgMode1,datLen);
+    CuFillArrayComp<<<gridDatLen,block>>>(dev_holo1,imgMode2,datLen);
     // CuFillArrayComp<<<gridDatLen,block>>>(dev_holo1,0.5,datLen);
-    CuFillArrayComp<<<gridDatLen,block>>>(dev_holo2,imgMode2,datLen);
+    CuFillArrayComp<<<gridDatLen,block>>>(dev_holo2,imgMode1,datLen);
     // CuFillArrayComp<<<gridDatLen,block>>>(dev_holo2,0.5,datLen);
     CuSetArrayCenterHalf<<<gridImgLen,block>>>(dev_holo1,dev_img2,imgLen);
     CuSetArrayCenterHalf<<<gridImgLen,block>>>(dev_holo2,dev_img1,imgLen);
@@ -963,7 +964,7 @@ void getBackRemGaborImposed(float *floatout, unsigned char *charout, unsigned ch
 
 
 
-void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,const int imgLen, const int gridSize, const int intrSize, const int srchSize, const float zF, const float dz, const float waveLen, const float dx,const int loopCount, const int blockSize){
+void getImgAndPIV(Spinnaker::CameraPtr pCam[2],const int imgLen, const int gridSize, const int intrSize, const int srchSize, const float zF, const float dz, const float waveLen, const float dx,const int loopCount, const int blockSize){
     // Constant Declaration
     const int datLen = imgLen*2;
     dim3 grid((int)ceil((float)datLen/(float)blockSize),(int)ceil((float)datLen/(float)blockSize)), block(blockSize,blockSize);
@@ -1069,7 +1070,7 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     // std::cout << "OK" << std::endl;
 }
 
-void getImgAndBundleAdjCheck(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,const int imgLen, const int gridSize, const int intrSize, const int srchSize, const float zF, const float dz, const float waveLen, const float dx, const int blockSize){
+void getImgAndBundleAdjCheck(Spinnaker::CameraPtr pCam[2],const int imgLen, const int gridSize, const int intrSize, const int srchSize, const float zF, const float dz, const float waveLen, const float dx, const int blockSize){
     // Constant Declaretion
     const int datLen = imgLen*2;
     dim3 grid((int)ceil((float)datLen/(float)blockSize),(int)ceil((float)datLen/(float)blockSize)), block(blockSize,blockSize);
