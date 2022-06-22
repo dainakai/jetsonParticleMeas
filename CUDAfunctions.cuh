@@ -676,7 +676,13 @@ __global__ void CuBackRem(float *out, float *back, float imgMode, int imgLen){
     if( (x < imgLen) && (y < imgLen) ){
         // out[y*imgLen + x] = out[y*imgLen+x]/back[y*imgLen+x];
         // out[y*imgLen + x] = out[y*imgLen+x]-back[y*imgLen+x]+addConst;
-        out[y*imgLen + x] = out[y*imgLen+x]-back[y*imgLen+x]+imgMode;
+        if (out[y*imgLen+x]-back[y*imgLen+x]<0.0){
+            out[y*imgLen + x] = 0.0;
+        }else if(out[y*imgLen+x]-back[y*imgLen+x]>255.0){
+            out[y*imgLen + x] = 255.0;
+        }else{
+            out[y*imgLen + x] = out[y*imgLen+x]-back[y*imgLen+x]+imgMode;
+        }
     }
 }
 
