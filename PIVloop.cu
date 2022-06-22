@@ -37,6 +37,7 @@ int main(int argc, char** argv){
 
     float gain1,gain2;
     std::tie(gain1,gain2) = readGain("./gain.dat");
+    // gain1 *= 1.6;
     
     const int imgLen = 512;
     const int intrSize = imgLen/8;
@@ -44,10 +45,10 @@ int main(int argc, char** argv){
     const int srchSize = imgLen/4;
     const int gridNum = (int)(imgLen/gridSize);
 
-    const int backgroundLoops = 10;
+    const int backgroundLoops = 30;
 
     const float zFront = 1000*60.0;
-    const float dz = 25.0;
+    const float dz = 10.0;
     const float wavLen = 0.532;
     const float dx = 3.45/0.5;
 
