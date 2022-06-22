@@ -47,7 +47,7 @@ int main(int argc, char** argv){
 
     const int backgroundLoops = 30;
 
-    const float zFront = 1000*60.0;
+    const float zFront = 1000*5.0;
     const float dz = 10.0;
     const float wavLen = 0.532;
     const float dx = 3.45/0.5;

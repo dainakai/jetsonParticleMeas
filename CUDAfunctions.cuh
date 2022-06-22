@@ -406,6 +406,24 @@ float getImgMode(unsigned char *in, int imgLen){
     return (float)idx;
 }
 
+float getImgSTD(unsigned char *in, int imgLen){
+    unsigned char *tmp;
+    tmp = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
+    float mean=0.0;
+    for (int idx = 0; idx < imgLen*imgLen; idx++){
+        mean += (float)((int)in[idx]);
+    }
+    mean /= (float)(imgLen*imgLen);
+
+    float std;
+    for (int idx = 0; idx < imgLen*imgLen; idx++){
+        std += sqrt(((float)((int)in[idx])-mean)*((float)((int)in[idx])-mean));
+    }
+    std /= (float)(imgLen*imgLen);
+
+    return std;
+}
+
 void getGaborImposed(float *floatout, unsigned char *charout, unsigned char *in, cufftComplex *transF, cufftComplex *transInt, int imgLen, int loopCount, int blockSize=16){
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
@@ -943,6 +961,8 @@ void getBackRemGaborImposed(float *floatout, unsigned char *charout, unsigned ch
     CHECK(cudaFree(saveImp));
 }
 
+
+
 void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,const int imgLen, const int gridSize, const int intrSize, const int srchSize, const float zF, const float dz, const float waveLen, const float dx,const int loopCount, const int blockSize){
     // Constant Declaration
     const int datLen = imgLen*2;
@@ -957,7 +977,7 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     CHECK(cudaMalloc((void **)&d_transInt, sizeof(cufftComplex)*datLen*datLen));
     CuTransSqr<<<grid,block>>>(d_sqr,datLen,waveLen,dx);
     CuTransFunc<<<grid,block>>>(d_transF,d_sqr,-1.0*zF,waveLen,datLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-1.0*zF,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-2.0*zF,waveLen,datLen,dx);
     // CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-2.0*zF,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,-1.0*dz,waveLen,datLen,dx);
     std::cout << "Gabor Init OK" << std::endl;
@@ -976,7 +996,8 @@ void getImgAndPIV(Spinnaker::CameraPtr pCam[2],float *backImg1, float *backImg2,
     unsigned char *charimg1 = (unsigned char *)pimg1->GetData();
     // unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
     unsigned char *charimg2 = (unsigned char *)pimg2->GetData();
-    std::cout << (int)charimg1[0] << std::endl;
+    std::cout << "Cam 1 std: " << getImgSTD(charimg1,imgLen) << std::endl;
+    std::cout << "Cam 2 std: " << getImgSTD(charimg2,imgLen) << std::endl;
 
     float *floatimp1, *floatimp2;
     floatimp1 = (float *)malloc(sizeof(float)*imgLen*imgLen);
@@ -1062,7 +1083,7 @@ void getImgAndBundleAdjCheck(Spinnaker::CameraPtr pCam[2],float *backImg1, float
     CHECK(cudaMalloc((void **)&d_transInt, sizeof(cufftComplex)*datLen*datLen));
     CuTransSqr<<<grid,block>>>(d_sqr,datLen,waveLen,dx);
     CuTransFunc<<<grid,block>>>(d_transF,d_sqr,-1.0*zF,waveLen,datLen,dx);
-    CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-1.0*zF,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-2.0*zF,waveLen,datLen,dx);
     // CuTransFunc<<<grid,block>>>(d_transF2,d_sqr,-2.0*zF,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,-1.0*dz,waveLen,datLen,dx);
     std::cout << "Gabor Init OK" << std::endl;
