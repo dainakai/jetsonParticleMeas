@@ -47,7 +47,7 @@ int main(int argc, char** argv){
     const int srchSize = imgLen/4;
     const int gridNum = (int)(imgLen/gridSize);
 
-    const int prLoop = 20;
+    const int prLoop = 10;
     const int backgroundLoops = 30;
     const int ImposedLoop = 100;
 
