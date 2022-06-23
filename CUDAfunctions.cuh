@@ -943,6 +943,65 @@ void getBackGrounds(float *backImg1,float *backImg2, unsigned char *cBackImg1, u
 
 }
 
+void getBackGroundsWithMode(float *backImg1,float *backImg2, unsigned char *cBackImg1, unsigned char *cBackImg2, Spinnaker::CameraPtr pCam[2], int imgLen, int loopCount){
+    float coefa[12];
+    char *coefPath = "./coefa.dat";
+    readCoef(coefPath,coefa);
+    Spinnaker::ImagePtr pImg1, pImg2;
+    unsigned char *cImg1, *cImg2;
+    int *vote1, *vote2;
+    vote1 = (int *)calloc(imgLen*imgLen*256,sizeof(int));
+    vote2 = (int *)calloc(imgLen*imgLen*256,sizeof(int));
+    for (int itr = 0; itr < loopCount; itr++)
+    {
+        std::cout << "iteration: " << itr << std::endl;
+        pCam[0]->BeginAcquisition();
+        pCam[1]->BeginAcquisition();
+        pCam[0]->TriggerSoftware.Execute();
+        pImg1 = pCam[0]->GetNextImage();
+        pImg2 = pCam[1]->GetNextImage();
+        pCam[0]->EndAcquisition();
+        pCam[1]->EndAcquisition();
+        cImg1 = (unsigned char *)pImg1->GetData();
+        cImg2 = (unsigned char *)pImg2->GetData();
+        for (int idx = 0; idx < imgLen*imgLen; idx++){
+            vote1[idx*256 + (int)cImg1[idx]] += 1;
+            vote1[idx*256 + (int)cImg1[idx]] += 1;
+        }
+    }
+
+    // getNewFloatImage(fImg2,fImg2,coefa,imgLen);
+
+    for (int idx = 0; idx < imgLen*imgLen; idx++){
+        int tmp1 = 0;
+        int tmp2 = 0;
+        int max1 = 0;
+        int max2 = 0;
+        for (int i = 0; i < 256; i++){
+            if (vote1[idx*256 + i] > max1){
+                tmp1 = i;
+            }
+            if (vote2[idx*256 + i] > max2){
+                tmp2 = i;
+            }
+        }
+        cImg1[idx] = tmp1;
+        cImg2[idx] = tmp2;
+    }
+
+    getNewImage(cImg2,cImg2,coefa,imgLen);
+
+    for (int idx = 0; idx < imgLen*imgLen; idx++){
+        backImg1[idx] = (float)cImg1[idx];
+        backImg2[idx] = (float)cImg2[idx];
+        cBackImg1[idx] = (unsigned char)(cImg1[idx]);
+        cBackImg2[idx] = (unsigned char)(cImg2[idx]);
+    }
+
+    free(vote1);
+    free(vote2);
+}
+
 void getBackRemGaborImposed(float *floatout, unsigned char *charout, unsigned char *in, float*backImg, cufftComplex *transF, cufftComplex *transInt, int imgLen, int loopCount, int blockSize=16){
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);

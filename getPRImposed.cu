@@ -48,7 +48,7 @@ int main(int argc, char** argv){
     const int gridNum = (int)(imgLen/gridSize);
 
     const int prLoop = 10;
-    const int backgroundLoops = 30;
+    const int backgroundLoops = 200;
     const int ImposedLoop = 180;
 
     const float prDist = 5.0*1000.0; // 60 mm
@@ -130,7 +130,7 @@ int main(int argc, char** argv){
     cBackImg2 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
     Spinnaker::ImagePtr saveBack1 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg1);
     Spinnaker::ImagePtr saveBack2 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg2);
-    getBackGrounds(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
+    getBackGroundsWithMode(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
     saveBack1->Convert(Spinnaker::PixelFormat_Mono8);
     saveBack2->Convert(Spinnaker::PixelFormat_Mono8);
     saveBack1->Save("./meanBkg1.png");
