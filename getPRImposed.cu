@@ -49,10 +49,11 @@ int main(int argc, char** argv){
 
     const int prLoop = 10;
     const int backgroundLoops = 30;
-    const int ImposedLoop = 100;
+    const int ImposedLoop = 180;
 
     const float prDist = 5.0*1000.0; // 60 mm
     const float zF = 5.0*1000.0;
+    const float zInterval = 100.0*1000.0;
     const float dz = 20.0;
     const float waveLen = 0.532;
     const float dx = 3.45/0.5;
@@ -93,17 +94,19 @@ int main(int argc, char** argv){
 
     // Propagation Init
     float *d_sqr;
-    cufftComplex *d_transF, *d_transInt, *d_transPR, *d_transPRInv;
+    cufftComplex *d_transF, *d_transInt, *d_transPR, *d_transPRInv, *d_transZInterval;;
     CHECK(cudaMalloc((void **)&d_sqr, sizeof(float)*datLen*datLen));
     CHECK(cudaMalloc((void **)&d_transF, sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void **)&d_transInt, sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void **)&d_transPR, sizeof(cufftComplex)*datLen*datLen));
     CHECK(cudaMalloc((void **)&d_transPRInv, sizeof(cufftComplex)*datLen*datLen));
+    CHECK(cudaMalloc((void **)&d_transZInterval, sizeof(cufftComplex)*datLen*datLen));
     CuTransSqr<<<grid,block>>>(d_sqr,datLen,waveLen,dx);
     CuTransFunc<<<grid,block>>>(d_transF,d_sqr,-1.0*zF,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transInt,d_sqr,-1.0*dz,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transPR,d_sqr,prDist,waveLen,datLen,dx);
     CuTransFunc<<<grid,block>>>(d_transPRInv,d_sqr,-1.0*prDist,waveLen,datLen,dx);
+    CuTransFunc<<<grid,block>>>(d_transZInterval,d_sqr,-1.0*zInterval,waveLen,datLen,dx);
     std::cout << "PR Init OK" << std::endl;
 
     // Background Processing
@@ -196,8 +199,8 @@ int main(int argc, char** argv){
 
         getNewImage(charimg2,charimg2,coefa,imgLen);
 
-        getPRImposed(outPrImp,outPrCImp,charimg1,charimg2,bImg1,bImg2,d_transF,d_transInt,d_transPR,d_transPRInv,imgLen,ImposedLoop,prLoop,blockSize);
-        getBackRemGaborImposed(outGaborImp,outGaborCImp,charimg2,bImg2,d_transF,d_transInt,imgLen,ImposedLoop,blockSize);
+        getPRImposed(outPrImp,outPrCImp,charimg1,charimg2,bImg1,bImg2,d_transF,d_transInt,d_transPR,d_transPRInv,d_transZInterval,imgLen,ImposedLoop,prLoop,blockSize);
+        getBackRemGaborImposedforPR(outGaborImp,outGaborCImp,charimg2,bImg2,d_transF,d_transInt,d_transZInterval,imgLen,ImposedLoop,blockSize);
 
         saveGaborImp->Convert(Spinnaker::PixelFormat_Mono8);
         savePrImp->Convert(Spinnaker::PixelFormat_Mono8);
