@@ -130,7 +130,7 @@ int main(int argc, char** argv){
     cBackImg2 = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
     Spinnaker::ImagePtr saveBack1 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg1);
     Spinnaker::ImagePtr saveBack2 = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg2);
-    getBackGroundsWithMode(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
+    getBackGrounds(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
     saveBack1->Convert(Spinnaker::PixelFormat_Mono8);
     saveBack2->Convert(Spinnaker::PixelFormat_Mono8);
     saveBack1->Save("./meanBkg1.png");
