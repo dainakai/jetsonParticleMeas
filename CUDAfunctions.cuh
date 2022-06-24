@@ -705,7 +705,7 @@ __global__ void CuFloatDiv(float *out, float value, int imgLen){
     }
 }
 
-void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, unsigned char *in2, float* backImg1, float* backImg2, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transPR, cufftComplex *transInvPR, cufftComplex *transInterval, int imgLen, int loopCount, int PRloops, int blockSize=16){
+void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, unsigned char *in2, float* backImg1, float* backImg2, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transPR, cufftComplex *transInvPR, int imgLen, int loopCount, int PRloops, int blockSize=16){
     // dim3 Declaration
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
@@ -792,8 +792,6 @@ void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, u
     cufftExecC2C(plan, dev_prholo, dev_prholo, CUFFT_FORWARD);
     CuFFTshift<<<gridDatLen,block>>>(dev_prholo, datLen);
     CuComplexMul<<<gridDatLen,block>>>(dev_prholo, dev_prholo, transF, datLen);
-
-    CuComplexMul<<<gridDatLen,block>>>(dev_prholo, dev_prholo, transInterval, datLen);
 
     cufftComplex *tmp_holo;
     float *tmp_imp;
@@ -966,7 +964,7 @@ void getBackGroundsWithMode(float *backImg1,float *backImg2, unsigned char *cBac
         cImg2 = (unsigned char *)pImg2->GetData();
         for (int idx = 0; idx < imgLen*imgLen; idx++){
             vote1[idx*256 + (int)cImg1[idx]] += 1;
-            vote1[idx*256 + (int)cImg1[idx]] += 1;
+            vote2[idx*256 + (int)cImg2[idx]] += 1;
         }
     }
 
@@ -1082,90 +1080,6 @@ void getBackRemGaborImposed(float *floatout, unsigned char *charout, unsigned ch
     CHECK(cudaFree(dev_outImp));
     CHECK(cudaFree(saveImp));
 }
-
-void getBackRemGaborImposedforPR(float *floatout, unsigned char *charout, unsigned char *in, float*backImg, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transInterval, int imgLen, int loopCount, int blockSize=16){
-    int datLen = imgLen*2;
-    dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
-    dim3 gridDatLen((int)ceil((float)datLen/(float)blockSize), (int)ceil((float)datLen/(float)blockSize));
-    
-    unsigned char *dev_in;
-    CHECK(cudaMalloc((void**)&dev_in,sizeof(unsigned char)*imgLen*imgLen));
-    float *dev_img;
-    CHECK(cudaMalloc((void**)&dev_img,sizeof(float)*imgLen*imgLen));
-    CHECK(cudaMemcpy(dev_in, in, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyHostToDevice));
-    CuCharToNormFloatArr<<<gridImgLen,block>>>(dev_img,dev_in,imgLen,1.0);
-    // thrust::device_ptr<float> thimg(dev_img);
-    // float meanImg = thrust::reduce(thimg,thimg+imgLen*imgLen, (float)0.0, thrust::plus<float>());
-    // meanImg /= (float)(imgLen*imgLen);
-    // std::cout << "Image mean: " << meanImg << std::endl;
-
-    // Background Subtraction. Means to be 0.5
-    float imgMode = getImgMean(backImg,imgLen);
-    float *dev_bkg;
-    CHECK(cudaMalloc((void**)&dev_bkg,sizeof(float)*imgLen*imgLen));
-    CHECK(cudaMemcpy(dev_bkg,backImg,sizeof(float)*imgLen*imgLen,cudaMemcpyHostToDevice));
-    CuBackRem<<<gridImgLen,block>>>(dev_img,dev_bkg,imgMode,imgLen);
-    // CuBackRem<<<gridImgLen,block>>>(dev_img,dev_bkg,0.5,imgLen);
-    cudaFree(dev_bkg);
-
-    cufftComplex *dev_holo;
-    CHECK(cudaMalloc((void**)&dev_holo,sizeof(cufftComplex)*datLen*datLen));
-    CuFillArrayComp<<<gridDatLen,block>>>(dev_holo,imgMode,datLen);
-    // CuFillArrayComp<<<gridDatLen,block>>>(dev_holo,0.5,datLen);
-    CuSetArrayCenterHalf<<<gridImgLen,block>>>(dev_holo,dev_img,imgLen);
-
-    float *dev_imp;
-    CHECK(cudaMalloc((void**)&dev_imp,sizeof(float)*datLen*datLen));
-    CuFillArrayFloat<<<gridDatLen,block>>>(dev_imp,255.0,datLen);
-
-    cufftHandle plan;
-    cufftPlan2d(&plan, datLen, datLen, CUFFT_C2C);
-
-    cufftExecC2C(plan, dev_holo, dev_holo, CUFFT_FORWARD);
-    CuFFTshift<<<gridDatLen,block>>>(dev_holo, datLen);
-    CuComplexMul<<<gridDatLen,block>>>(dev_holo, dev_holo, transF, datLen);
-
-    CuComplexMul<<<gridDatLen, block>>>(dev_holo,dev_holo,transInterval,datLen);
-
-    cufftComplex *tmp_holo;
-    float *tmp_imp;
-    CHECK(cudaMalloc((void**)&tmp_holo,sizeof(cufftComplex)*datLen*datLen));
-    CHECK(cudaMalloc((void**)&tmp_imp,sizeof(float)*datLen*datLen));
-    
-    for (int itr = 0; itr < loopCount; itr++){
-        CuComplexMul<<<gridDatLen,block>>>(dev_holo,dev_holo,transInt,datLen);
-        CHECK(cudaMemcpy(tmp_holo,dev_holo,sizeof(cufftComplex)*datLen*datLen,cudaMemcpyDeviceToDevice));
-        CuFFTshift<<<gridDatLen,block>>>(tmp_holo,datLen);
-        cufftExecC2C(plan, tmp_holo, tmp_holo, CUFFT_INVERSE);
-        CuInvFFTDiv<<<gridDatLen,block>>>(tmp_holo,(float)(datLen*datLen),datLen);
-        CuGetAbsFromComp<<<gridDatLen,block>>>(tmp_imp,tmp_holo,datLen);
-        CuUpdateImposed<<<gridDatLen,block>>>(dev_imp,tmp_imp,datLen);
-    }
-
-    float *dev_outImp;
-    CHECK(cudaMalloc((void**)&dev_outImp,sizeof(float)*imgLen*imgLen));
-    CuGetCenterHalf<<<gridImgLen,block>>>(dev_outImp,dev_imp,imgLen);
-
-    CHECK(cudaMemcpy(floatout, dev_outImp, sizeof(float)*imgLen*imgLen, cudaMemcpyDeviceToHost));
-
-    unsigned char *saveImp;
-    CHECK(cudaMalloc((void**)&saveImp,sizeof(unsigned char)*imgLen*imgLen));
-    CuNormFloatArrToChar<<<gridImgLen,block>>>(saveImp,dev_outImp,imgLen,1.0);
-    // CuNormFloatArrToChar<<<gridImgLen,block>>>(saveImp,dev_outImp,imgLen,255.0);
-
-    CHECK(cudaMemcpy(charout, saveImp, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyDeviceToHost));
-
-    cufftDestroy(plan);
-    CHECK(cudaFree(dev_in));
-    CHECK(cudaFree(dev_img));
-    CHECK(cudaFree(dev_holo));
-    CHECK(cudaFree(dev_imp));
-    CHECK(cudaFree(tmp_holo));
-    CHECK(cudaFree(tmp_imp));
-    CHECK(cudaFree(dev_outImp));
-    CHECK(cudaFree(saveImp));
-}
-
 
 void getImgAndPIV(Spinnaker::CameraPtr pCam[2],const int imgLen, const int gridSize, const int intrSize, const int srchSize, const float zF, const float dz, const float waveLen, const float dx,const int loopCount, const int blockSize){
     // Constant Declaration
