@@ -705,7 +705,7 @@ __global__ void CuFloatDiv(float *out, float value, int imgLen){
     }
 }
 
-void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, unsigned char *in2, float* backImg1, float* backImg2, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transPR, cufftComplex *transInvPR, int imgLen, int loopCount, int PRloops, int blockSize=16){
+void getPRImposed(float *floatout, unsigned char *charout, cufftComplex *outholo, unsigned char *in1, unsigned char *in2, float* backImg1, float* backImg2, cufftComplex *transF, cufftComplex *transInt, cufftComplex *transPR, cufftComplex *transInvPR, int imgLen, int loopCount, int PRloops, int blockSize=16){
     // dim3 Declaration
     int datLen = imgLen*2;
     dim3 gridImgLen((int)ceil((float)imgLen/(float)blockSize), (int)ceil((float)imgLen/(float)blockSize)), block(blockSize,blockSize);
@@ -781,6 +781,8 @@ void getPRImposed(float *floatout, unsigned char *charout, unsigned char *in1, u
     // cv::imwrite("./inter.png",interImg);
     // free(host);
     // free(inter);
+
+    CHECK(cudaMemcpy(outholo,dev_prholo,sizeof(cufftComplex)*datLen*datLen,cudaMemcpyDeviceToHost));
 
     float *dev_imp;
     CHECK(cudaMalloc((void**)&dev_imp,sizeof(float)*datLen*datLen));
@@ -1279,4 +1281,17 @@ void getImgAndBundleAdjCheck(Spinnaker::CameraPtr pCam[2],const int imgLen, cons
     CHECK(cudaFree(d_transF));
     CHECK(cudaFree(d_transF2));
     CHECK(cudaFree(d_transInt));
+}
+
+void saveCufftComplex(cufftComplex *hostArr, char *filename, int datLen){
+    FILE *fp;
+    fp = fopen(filename, "w");
+    if(fp == NULL){
+        printf("%s seems not to be accesed! Quitting...\n",filename);
+        exit(1);
+    }
+    for (int idx = 0; idx < datLen*datLen; idx++){
+        fprintf(fp,"%f %f\n",hostArr[idx].x,hostArr[idx].y);
+    }
+    fclose(fp);
 }

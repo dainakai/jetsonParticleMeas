@@ -170,16 +170,22 @@ int main(int argc, char** argv){
     mkdir(dirPath,0777);
     sprintf(dirPath,"./ImposedOutput/%02d%02d/%02d%02d%02d%02d/PR/",tm.tm_mon+1,tm.tm_mday,tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
     mkdir(dirPath,0777);
+    sprintf(dirPath,"./ImposedOutput/%02d%02d/%02d%02d%02d%02d/Holo/",tm.tm_mon+1,tm.tm_mday,tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
+    mkdir(dirPath,0777);
     sprintf(dirPath,"./ImposedOutput/%02d%02d/%02d%02d%02d%02d",tm.tm_mon+1,tm.tm_mday,tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min);
 
     char savePrPath[150];
     char saveGaborPath[150];
+    char saveHoloPath[150];
 
     cv::Mat PrImp, GaborImp;
     cv::namedWindow("PR",cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Gabor",cv::WINDOW_AUTOSIZE);
     cv::moveWindow("PR",520,0);
     cv::moveWindow("Gabor",0,0);
+
+    cufftComplex *holoData;
+    holoData = (cufftComplex *)malloc(sizeof(cufftComplex)*datLen*datLen);
 
     int num = 0;
     while(!e_flag){
@@ -196,7 +202,7 @@ int main(int argc, char** argv){
 
         getNewImage(charimg2,charimg2,coefa,imgLen);
 
-        getPRImposed(outPrImp,outPrCImp,charimg1,charimg2,bImg1,bImg2,d_transF,d_transInt,d_transPR,d_transPRInv,imgLen,ImposedLoop,prLoop,blockSize);
+        getPRImposed(outPrImp,outPrCImp,holoData,charimg1,charimg2,bImg1,bImg2,d_transF,d_transInt,d_transPR,d_transPRInv,imgLen,ImposedLoop,prLoop,blockSize);
         getBackRemGaborImposed(outGaborImp,outGaborCImp,charimg2,bImg2,d_transF,d_transInt,imgLen,ImposedLoop,blockSize);
 
         saveGaborImp->Convert(Spinnaker::PixelFormat_Mono8);
@@ -204,9 +210,12 @@ int main(int argc, char** argv){
         
         sprintf(savePrPath,"%s/PR/%05d.png",dirPath,num);
         sprintf(saveGaborPath,"%s/Gabor/%05d.png",dirPath,num);
+        sprintf(saveHoloPath,"%s/Holo/%05d.dat",dirPath,num);
 
         saveGaborImp->Save(saveGaborPath);
         savePrImp->Save(savePrPath);
+
+        saveCufftComplex(holoData,saveHoloPath,datLen);
 
         PrImp = cv::Mat(imgLen,imgLen,CV_8U,outPrCImp);
         GaborImp = cv::Mat(imgLen,imgLen,CV_8U,outGaborCImp);
@@ -231,6 +240,7 @@ int main(int argc, char** argv){
     free(outPrCImp);
     free(outGaborImp);
     free(outGaborCImp);
+    free(holoData);
 
     camList.Clear();
     system->ReleaseInstance();
