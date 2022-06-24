@@ -49,11 +49,11 @@ int main(int argc, char** argv){
 
     const int prLoop = 10;
     const int backgroundLoops = 200;
-    const int ImposedLoop = 180;
+    const int ImposedLoop = 200;
 
     const float prDist = 5.0*1000.0; // 60 mm
     const float zF = 5.0*1000.0;
-    const float dz = 20.0;
+    const float dz = 50.0;
     const float waveLen = 0.532;
     const float dx = 3.45/0.5;
 
