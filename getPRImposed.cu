@@ -48,7 +48,7 @@ int main(int argc, char** argv){
     const int gridNum = (int)(imgLen/gridSize);
 
     const int prLoop = 10;
-    const int backgroundLoops = 200;
+    const int backgroundLoops = 500;
     const int ImposedLoop = 400;
 
     const float prDist = 5.0*1000.0; // 60 mm
