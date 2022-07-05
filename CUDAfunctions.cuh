@@ -734,9 +734,11 @@ void getPRImposed(float *floatout, unsigned char *charout, cufftComplex *outholo
     // Background Subtraction. Means to be 0.5
 
     // float imgMode1 = 100;
-    float imgMode1 = getImgMean(backImg1,imgLen);
+    float imgMode1 = getImgMode(in1,imgLen);
+    // float imgMode1 = getImgMean(backImg1,imgLen);
     // float imgMode2 = 102;
-    float imgMode2 = getImgMean(backImg2,imgLen);
+    float imgMode2 = getImgMode(in2,imgLen);
+    // float imgMode2 = getImgMean(backImg2,imgLen);
 
     float *dev_bkg1,*dev_bkg2;
     CHECK(cudaMalloc((void**)&dev_bkg1,sizeof(float)*imgLen*imgLen));

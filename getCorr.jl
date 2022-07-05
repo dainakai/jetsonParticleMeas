@@ -78,10 +78,10 @@ end
 パラメータ a で与えた二次の画像変換について、ターゲット座標との差のベクトル e の a に関するヤコビアンを計算し、戻り値として返します。
 """
 function getYacobian(imgSize, gridSize)
-    x = collect(gridSize:gridSize:imgSize-1)
-    # x = collect(gridSize+0.5:gridSize:imgSize)
-    y = collect(gridSize:gridSize:imgSize-1)
-    # y = collect(gridSize+0.5:gridSize:imgSize)
+    # x = collect(gridSize:gridSize:imgSize-1)
+    x = collect(gridSize+0.5:gridSize:imgSize)
+    # y = collect(gridSize:gridSize:imgSize-1)
+    y = collect(gridSize+0.5:gridSize:imgSize)
     n = size(x)[1]
     na = 12
 
@@ -137,10 +137,10 @@ end
 function getErrorVec(vecMap, coefa, imgSize)
     gridSize = div(imgSize,8)
     n = 7
-    gridx = collect(gridSize:gridSize:imgSize-1)
-    # gridx = collect(gridSize+0.5:gridSize:imgSize)
-    gridy = collect(gridSize:gridSize:imgSize-1)
-    # gridy = collect(gridSize+0.5:gridSize:imgSize)
+    # gridx = collect(gridSize:gridSize:imgSize-1)
+    gridx = collect(gridSize+0.5:gridSize:imgSize)
+    # gridy = collect(gridSize:gridSize:imgSize-1)
+    gridy = collect(gridSize+0.5:gridSize:imgSize)
     targetX = Array{Float64}(undef,n*n)
     targetY = Array{Float64}(undef,n*n)
     procX = Array{Float64}(undef,n*n)
