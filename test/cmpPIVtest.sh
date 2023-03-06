@@ -1,0 +1,1 @@
+nvcc -O3 -lcufft PIVtest.cu -o PIVtest
