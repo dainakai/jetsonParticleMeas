@@ -31,7 +31,7 @@ int main(int argc, char** argv){
     }
     
     // Parameters
-    const float camExposure = 129.0;
+    const float camExposure = 96.0;
     const float gainInit = 0.0;
 
     const int OffsetX = atoi(argv[1]);
@@ -50,6 +50,8 @@ int main(int argc, char** argv){
     unsigned int numCameras = camList.GetSize();
     if (numCameras==0){
         std::cout << "No Cameras are Connected! Quitting..." << std::endl;
+        camList.Clear();
+        system->ReleaseInstance();
         exit(1);
     }
     Spinnaker::CameraPtr pCam[numCameras];
@@ -61,9 +63,20 @@ int main(int argc, char** argv){
         Spinnaker::GenICam::gcstring serialNum = pCam[i]->TLDevice.DeviceSerialNumber.GetValue();
         std::cout << i << "\t" << modelName << "\t" << serialNum << std::endl;
     }
-    if (numCameras != 2){
-        std::cout << "Number of Connected Cameras is not 2. Quitting..." << std::endl;
-        exit(0);
+    if (numCameras != 1){
+        std::cout << "Number of Connected Cameras is not 1. Quitting..." << std::endl;
+        for (unsigned int camIndex = 0; camIndex < camList.GetSize(); ++camIndex)
+        {
+            if (pCam[camIndex].IsValid())
+            {
+                std::cout << "Resetting configuration for device " << pCam[camIndex]->TLDevice.DeviceSerialNumber.GetValue() << std::endl;
+                pCam[camIndex]->DeInit();
+                pCam[camIndex] = nullptr;
+            }
+        }
+        camList.Clear();
+        system->ReleaseInstance();
+        exit(1);
     }
     std::cout << "Camera Enum OK" << std::endl;
 
@@ -158,6 +171,16 @@ int main(int argc, char** argv){
         num += 1;
     }
 
+    // Reset camera user sets and deinitialize all cameras
+    for (unsigned int camIndex = 0; camIndex < camList.GetSize(); ++camIndex)
+    {
+        if (pCam[camIndex].IsValid())
+        {
+            std::cout << "Resetting configuration for device " << pCam[camIndex]->TLDevice.DeviceSerialNumber.GetValue() << std::endl;
+            pCam[camIndex]->DeInit();
+            pCam[camIndex] = nullptr;
+        }
+    }
     camList.Clear();
     system->ReleaseInstance();
 

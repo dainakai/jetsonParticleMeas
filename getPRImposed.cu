@@ -140,8 +140,8 @@ int main(int argc, char** argv){
     getBackGrounds(bImg1,bImg2,cBackImg1,cBackImg2,pCam,imgLen,backgroundLoops);
     saveBack1->Convert(Spinnaker::PixelFormat_Mono8);
     saveBack2->Convert(Spinnaker::PixelFormat_Mono8);
-    saveBack1->Save("./meanBkg1.png");
-    saveBack2->Save("./meanBkg2.png");
+    // saveBack1->Save("./meanBkg1.png");
+    // saveBack2->Save("./meanBkg2.png");
     std::cout << "test" << std::endl;
 
     float backMode1 = getImgMode(cBackImg1,imgLen);

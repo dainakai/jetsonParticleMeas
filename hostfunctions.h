@@ -116,7 +116,7 @@ void plotVecFieldOnGnuplot(const int imgLen){
  * @param cam2OffSetX カメラ2のオフセット．事前にSpinViewで調整
  * @return なし
  */
-void acameraSetup(Spinnaker::CameraPtr pCam[2], int imgLen, int cam2OffSetX, int cam2OffSetY, float exposure, float gain1, float gain2){
+void cameraSetup(Spinnaker::CameraPtr pCam[2], int imgLen, int cam2OffSetX, int cam2OffSetY, float exposure, float gain1, float gain2){
 
     // Settings common to all cameras
     for (int i = 0; i < 2; i++){
@@ -165,6 +165,43 @@ void acameraSetup(Spinnaker::CameraPtr pCam[2], int imgLen, int cam2OffSetX, int
     pCam[1]->TriggerSource.SetValue(Spinnaker::TriggerSourceEnums::TriggerSource_Line3);
     pCam[1]->TriggerSelector.SetValue(Spinnaker::TriggerSelectorEnums::TriggerSelector_FrameStart);
     pCam[1]->TriggerOverlap.SetValue(Spinnaker::TriggerOverlapEnums::TriggerOverlap_ReadOut);
+
+    printf("Camera Setup Completed.\n\n");
+}
+
+/**
+ * @fn
+ * @brief 1カメラ(inline)の設定
+ * @param camOffSetX カメラのオフセット．事前にSpinViewで調整
+ * @return なし
+ */
+void singleCameraSetup(Spinnaker::CameraPtr pCam, int imgLen, int camOffSetX, int camOffSetY, float exposure, float gain){
+    pCam->GammaEnable.SetValue(false);
+    pCam->AdcBitDepth.SetValue(Spinnaker::AdcBitDepth_Bit12);
+    pCam->AcquisitionFrameRateEnable.SetValue(false);
+    pCam->PixelFormat.SetValue(Spinnaker::PixelFormat_Mono8);
+    pCam->ExposureAuto.SetValue(Spinnaker::ExposureAutoEnums::ExposureAuto_Off);
+    pCam->ExposureMode.SetValue(Spinnaker::ExposureModeEnums::ExposureMode_Timed);
+    pCam->ExposureTime.SetValue(exposure);
+    pCam->GainAuto.SetValue(Spinnaker::GainAutoEnums::GainAuto_Off);
+    pCam->AcquisitionMode.SetValue(Spinnaker::AcquisitionModeEnums::AcquisitionMode_Continuous);
+
+    // Settings for Camera 1
+    pCam->Width.SetValue(imgLen);
+    pCam->Height.SetValue(imgLen);
+    pCam->OffsetX.SetValue(camOffSetX);
+    pCam->OffsetY.SetValue(camOffSetY);
+    pCam->Gain.SetValue(gain);
+    pCam->ReverseX.SetValue(false);
+    pCam->ReverseY.SetValue(false);
+    pCam->TriggerMode.SetValue(Spinnaker::TriggerModeEnums::TriggerMode_On);
+    pCam->TriggerSource.SetValue(Spinnaker::TriggerSourceEnums::TriggerSource_Software);
+    pCam->TriggerSelector.SetValue(Spinnaker::TriggerSelectorEnums::TriggerSelector_FrameStart);
+    pCam->LineSelector.SetValue(Spinnaker::LineSelectorEnums::LineSelector_Line1);
+    pCam->LineMode.SetValue(Spinnaker::LineModeEnums::LineMode_Output);
+    pCam->LineSelector.SetValue(Spinnaker::LineSelectorEnums::LineSelector_Line2);
+    pCam->V3_3Enable.SetValue(true);
+    pCam->TriggerOverlap.SetValue(Spinnaker::TriggerOverlapEnums::TriggerOverlap_Off);
 
     printf("Camera Setup Completed.\n\n");
 }
