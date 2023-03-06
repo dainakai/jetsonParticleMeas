@@ -999,7 +999,7 @@ void getSingleBackGrounds(float *backImg, unsigned char *cBackImg, Spinnaker::Ca
     }
 
     free(fImg);
-    free(cImg);
+    // free(cImg);
 
 }
 
@@ -1121,8 +1121,8 @@ void getGaborReconstSlices(unsigned char *charin, float *backImg, float backMode
         CuFFTshift<<<gridDatLen,block>>>(tmp_holo,datLen);
         cufftExecC2C(plan, tmp_holo, tmp_holo, CUFFT_INVERSE);
         CuInvFFTDiv<<<gridDatLen,block>>>(tmp_holo,(float)(datLen*datLen),datLen);
-        CuGetAbs2uintFromComp<<<gridImgLen,block>>>(dev_saveImg,tmp_holo,datLen);
-        CHECK(cudaMemcpy(dev_saveImg, host_saveImg, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyDeviceToHost));
+        CuGetAbs2uintFromComp<<<gridImgLen,block>>>(dev_saveImg,tmp_holo,imgLen);
+        CHECK(cudaMemcpy(host_saveImg, dev_saveImg, sizeof(unsigned char)*imgLen*imgLen, cudaMemcpyDeviceToHost));
         saveImg->Convert(Spinnaker::PixelFormat_Mono8);
         sprintf(savePath,"%s/%05d.png",savepathheader,itr);
         saveImg->Save(savePath);

@@ -66,7 +66,7 @@ int main(int argc, char** argv){
     float gain1,gain2;
     std::tie(gain1,gain2) = readGain("./gain.dat");
     
-    const int imgLen = 512;
+    // const int imgLen = 512;
 
     // Camera Init
     Spinnaker::SystemPtr system = Spinnaker::System::GetInstance();
@@ -120,8 +120,8 @@ int main(int argc, char** argv){
     cBackImg = (unsigned char *)malloc(sizeof(unsigned char)*imgLen*imgLen);
     Spinnaker::ImagePtr saveBack = Spinnaker::Image::Create(imgLen,imgLen,0,0,Spinnaker::PixelFormatEnums::PixelFormat_Mono8,cBackImg);
     getSingleBackGrounds(bImg,cBackImg,pCam,imgLen,backgroundLoops);
-    saveBack->Convert(Spinnaker::PixelFormat_Mono8);
     std::cout << "test" << std::endl;
+    saveBack->Convert(Spinnaker::PixelFormat_Mono8);
 
     float backMode = getImgMode(cBackImg,imgLen);
 
